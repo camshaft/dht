@@ -63,7 +63,7 @@ handle_call({lookup, ID}, _From, #state { tbl = T } = State) ->
     {reply, maps:get(ID, T, not_found), State};
 handle_call({store, ID, Location}, _From, #state { tbl = T } = State) ->
     self() ! {refresh, ID, Location},
-    {reply, ok, State#state { tbl = T#{ ID => Location } }};
+    {reply, ok, State#state { tbl = maps:put(ID, Location, T)}};
 handle_call({delete, ID}, _From, #state { tbl = T } = State) ->
     {reply, ok, State#state { tbl = maps:remove(ID, T)}};
 handle_call(sync, _From, State) ->
@@ -114,7 +114,7 @@ store_at_peers([{{_ID, IP, Port}, Token} | Sts], ID, Location) ->
 pick(K, ID, Candidates) ->
     Ordered = lists:sort(fun({{IDx, _, _}, _}, {{IDy, _, _}, _}) -> dht_metric:d(ID, IDx) < dht_metric:d(ID, IDy) end, Candidates),
     take(K, Ordered).
-    
+
 take(0, _Rest) -> [];
 take(_K, []) -> [];
 take(K, [C | Cs]) -> [C | take(K-1, Cs)].

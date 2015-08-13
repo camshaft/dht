@@ -13,8 +13,9 @@
 
 -spec monotonic_time() -> integer().
 monotonic_time() ->
-    erlang:monotonic_time().
-	
+    {Mega, Sec, Micro} = erlang:now(),
+    Mega * 1000000 * 1000000 + Sec * 1000000 + Micro.
+
 time_offset() ->
     erlang:time_offset().
 
@@ -28,5 +29,10 @@ cancel_timer(TRef) ->
     erlang:cancel_timer(TRef).
 
 -spec convert_time_unit(integer(), erlang:time_unit(), erlang:time_unit()) -> integer().
+convert_time_unit(T, native, milli_seconds) ->
+    trunc(T div 1000);
+convert_time_unit(T, milli_seconds, native) ->
+    T * 1000;
 convert_time_unit(T, From, To) ->
+    io:format("~p ~p ~p~n", [T, From, To]),
     erlang:convert_time_unit(T, From, To).

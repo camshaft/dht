@@ -11,9 +11,9 @@
 pick([]) -> [];
 pick(Items) ->
     Len = length(Items),
-    Pos = rand:uniform(Len),
+    Pos = random:uniform(Len),
     lists:nth(Pos, Items).
 
 crypto_rand_bytes(N) -> crypto:rand_bytes(N).
 
-uniform(N) -> rand:uniform(N).
+uniform(N) -> random:uniform(N).

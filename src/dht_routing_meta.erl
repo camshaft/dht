@@ -112,7 +112,7 @@ replace(Old, New, #routing { nodes = Ns, table = Tbl } = State) ->
         member ->
             {error, member}
     end.
-    
+
 %% @doc insert/2 inserts a new node in the routing table
 %% Precondition: The node inserted is not a member
 %% Postcondition: The inserted node is now a member
@@ -185,7 +185,7 @@ range_state(Range, #routing{ table = Tbl } = Routing) ->
         true ->
             range_state_members(range_members(Range, Routing), Routing)
    end.
-   
+
 reset_range_timer(Range, #{ force := Force },
 	#routing { ranges = RT, nodes = Nodes, table = Tbl } = Routing) ->
     TS =
@@ -198,7 +198,7 @@ reset_range_timer(Range, #{ force := Force },
     TmpR = timer_delete(Range, RT),
     RTRef = mk_timer(TS, ?RANGE_TIMEOUT, {inactive_range, Range}),
     NewRT = range_timer_add(Range, TS, RTRef, TmpR),
-    
+
     Routing#routing { ranges = NewRT }.
 
 %% @doc export/1 returns the underlying routing table as an Erlang term
@@ -258,7 +258,7 @@ update_ranges(PrevRanges, Now, #routing { ranges = Ranges, nodes = NT, table = N
         [{del, R} || R <- ordsets:subtract(PrevRanges, NewRanges)],
         [{add, R} || R <- ordsets:subtract(NewRanges, PrevRanges)]),
     State#routing { ranges = fold_ranges(lists:sort(Operations), Now, NT, Ranges, NewTbl) }.
-    
+
 %% Carry out a sequence of operations over the ranges in a fold.
 fold_ranges([{del, R} | Ops], Now, Nodes, Ranges, Tbl) ->
     fold_ranges(Ops, Now, Nodes, timer_delete(R, Ranges), Tbl);
@@ -302,17 +302,17 @@ timer_delete(Item, Timers) ->
     maps:update(Item, V#{ timer_ref := undefined }, Timers).
 
 node_update({reachable, Item}, Activity, Timers) ->
-    Timers#{ Item => #{ last_activity => Activity, timeout_count => 0, reachable => true }};
+    maps:put(Item, #{ last_activity => Activity, timeout_count => 0, reachable => true }, Timers);
 node_update({unreachable, Item}, Activity, Timers) ->
     case maps:get(Item, Timers) of
         M = #{ reachable := true } ->
-            Timers#{ Item => M#{ last_activity => Activity, timeout_count => 0, reachable := true }};
+            maps:put(Item, M#{ last_activity => Activity, timeout_count => 0, reachable := true }, Timers);
         #{ reachable := false } ->
             Timers
     end.
 
 range_timer_add(Item, ActivityTime, TRef, Timers) ->
-    Timers#{ Item => #{ last_activity => ActivityTime, timer_ref => TRef} }.
+    maps:put(Item, #{ last_activity => ActivityTime, timer_ref => TRef}, Timers).
 
 timer_newest([], _) -> dht_time:monotonic_time(); % None available
 timer_newest(Items, Timers) ->
@@ -328,7 +328,7 @@ monus(A, B) when A =< B-> 0.
 age(T) ->
     Now = dht_time:monotonic_time(),
     age(T, Now).
-    
+
 %% Return the age compared to the current point in time
 age(T, Now) when T =< Now ->
     dht_time:convert_time_unit(Now - T, native, milli_seconds);
@@ -343,7 +343,7 @@ age(T, Now) when T > Now ->
 mk_timer(Start, Interval, Msg) ->
     Age = age(Start),
     dht_time:send_after(monus(Interval, Age), self(), Msg).
-    
+
 %% @doc timer_state/2 returns the state of a timer, based on BitTorrent Enhancement Proposal 5
 %% @end
 -spec timer_state({node, N} | {range, R}, Timers) ->
@@ -352,7 +352,7 @@ mk_timer(Start, Interval, Msg) ->
 	  N :: dht:peer(),
 	  R :: dht:range(),
 	  Timers :: maps:map().
-    
+
 timer_state({node, N}, NTs) ->
     case maps:get(N, NTs, undefined) of
         #{ timeout_count := K } when K > 1 -> bad;

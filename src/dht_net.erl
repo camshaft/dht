@@ -67,7 +67,7 @@
 %% @end
 start_link(DHTPort) ->
     start_link(DHTPort, #{}).
-    
+
 %% @private
 start_link(Port, Opts) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [Port, Opts], []).
@@ -139,7 +139,7 @@ find_node({IP, Port}, N)  ->
 	  Token :: dht:token(),
 	  Value :: dht:node_t(),
 	  Reason :: any().
-	    
+
 find_value(Peer, IDKey)  ->
     case request(Peer, {find, value, IDKey}) of
         {error, Reason} -> {error, Reason};
@@ -209,7 +209,7 @@ init([DHTPort, Opts]) ->
     {ok, Socket} = dht_socket:open(DHTPort, [binary, inet, {active, ?UDP_MAILBOX_SZ} | Base]),
     dht_time:send_after(?TOKEN_LIFETIME, ?MODULE, renew_token),
     {ok, #state{
-    	socket = Socket, 
+    	socket = Socket,
     	outstanding = #{},
     	tokens = init_tokens(Opts)}}.
 
@@ -332,7 +332,7 @@ view_packet_decode(Packet) ->
 
 unique_message_id(Peer, Active) ->
     unique_message_id(Peer, Active, 16).
-	
+
 unique_message_id(Peer, Active, K) when K > 0 ->
     IntID = dht_rand:uniform(16#FFFF),
     MsgID = <<IntID:16>>,
@@ -361,7 +361,7 @@ send_query({IP, Port} = Peer, Query, From, #state { outstanding = Active, socket
 
             Key = {Peer, MsgID},
             Value = {From, TRef},
-            {ok, State#state { outstanding = Active#{ Key => Value } } };
+            {ok, State#state { outstanding = maps:put(Key, Value, Active) } };
         {error, Reason} ->
             {error, Reason}
     end.
